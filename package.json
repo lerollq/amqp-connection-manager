@@ -1,0 +1,37 @@
+{
+  "name": "amqlib-connection-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "typings": "lib/index",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lerollq/amqplib-connection-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lerollq/amqplib-connection-manager/issues"
+  },
+  "homepage": "https://github.com/lerollq/amqplib-connection-manager#readme",
+  "devDependencies": {
+    "@types/amqplib": "^0.5.13",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.1",
+    "jest": "^25.4.0",
+    "ts-jest": "^25.4.0",
+    "ts-node": "^8.9.0",
+    "typescript": "^3.8.3"
+  },
+  "peerDependencies": {
+    "amqplib": "^0.5.5"
+  },
+  "files": [
+    "lib/"
+  ]
+}
