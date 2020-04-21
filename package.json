@@ -6,8 +6,8 @@
   "typings": "lib/index",
   "scripts": {
     "test": "jest",
-    "test:coverage": "jest --coverage && coveralls < coverage/lcov.info",
-    "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls",
+    "test:coverage": "jest --coverage",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
     "build": "tsc"
   },
   "repository": {
