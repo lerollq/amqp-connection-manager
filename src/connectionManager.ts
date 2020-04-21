@@ -24,24 +24,22 @@ export class AmqpConnectionManager extends EventEmitter {
     this.connect()
   }
 
-  public createChannel = (options: AmqpChannelWrapperOptions) => {
+  public createChannel(options: AmqpChannelWrapperOptions): AmqpChannelWrapper {
     const channel = new AmqpChannelWrapper(this, options)
-    channel.once('close', () => {
-      this.#channels = this.#channels.filter((chann) => chann !== channel)
-    })
+    channel.once('close', this.removeChannel.bind(this, channel))
     this.#channels.push(channel)
     return channel
   }
 
-  public isConnected = () => {
+  public isConnected() {
     return !!this.#currentConnection
   }
 
   private async connect(): Promise<amqplib.Connection> {
     try {
       const connection = await amqplib.connect(this.#options.url, this.#options.socketOptions)
-      connection.on('error', this.onError)
-      connection.on('close', this.onClose)
+      //connection.on('error', () => {})
+      connection.on('close', this.onClose.bind(this))
       this.#currentConnection = connection
       this.emit('connect', connection)
       return connection
@@ -53,11 +51,11 @@ export class AmqpConnectionManager extends EventEmitter {
     }
   }
 
-  private onError = (error: any) => {
-    //If here connection already clsosed
+  private removeChannel(channel: AmqpChannelWrapper) {
+    this.#channels = this.#channels.filter((chann) => chann !== channel)
   }
 
-  private onClose = (err?: any) => {
+  private onClose(err?: any) {
     this.#currentConnection = null
     this.emit('disconnect', err)
     return sleep(this.#options.reconnectionDelay ?? DEFAULT_RECONNECTION_DELAY)
@@ -67,5 +65,9 @@ export class AmqpConnectionManager extends EventEmitter {
 
   get connection() {
     return this.#currentConnection
+  }
+
+  get channels() {
+    return this.#channels
   }
 }
