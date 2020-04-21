@@ -14,10 +14,13 @@ export interface ConnectionOptions {
 export class AmqpConnectionManager extends EventEmitter {
   #currentConnection: amqplib.Connection | null
   #channels: AmqpChannelWrapper[]
-  constructor(private options: ConnectionOptions) {
+  #options: ConnectionOptions
+  constructor(options: ConnectionOptions) {
     super()
     this.#currentConnection = null
+    this.#options = options
     this.#channels = []
+
     this.connect()
   }
 
@@ -36,7 +39,7 @@ export class AmqpConnectionManager extends EventEmitter {
 
   private async connect(): Promise<amqplib.Connection> {
     try {
-      const connection = await amqplib.connect(this.options.url, this.options.socketOptions)
+      const connection = await amqplib.connect(this.#options.url, this.#options.socketOptions)
       connection.on('error', this.onError)
       connection.on('close', this.onClose)
       this.#currentConnection = connection
@@ -45,7 +48,7 @@ export class AmqpConnectionManager extends EventEmitter {
     } catch (error) {
       this.emit('disconnect', error)
       this.#currentConnection = null
-      await sleep(this.options.reconnectionDelay ?? DEFAULT_RECONNECTION_DELAY)
+      await sleep(this.#options.reconnectionDelay ?? DEFAULT_RECONNECTION_DELAY)
       return this.connect()
     }
   }
@@ -57,7 +60,7 @@ export class AmqpConnectionManager extends EventEmitter {
   private onClose = (err?: any) => {
     this.#currentConnection = null
     this.emit('disconnect', err)
-    return sleep(this.options.reconnectionDelay ?? DEFAULT_RECONNECTION_DELAY)
+    return sleep(this.#options.reconnectionDelay ?? DEFAULT_RECONNECTION_DELAY)
       .then(() => this.connect())
       .catch(neverThrows)
   }
