@@ -6,7 +6,7 @@
   "typings": "lib/index",
   "scripts": {
     "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage && coveralls < coverage/lcov.info",
     "build": "tsc"
   },
   "repository": {
@@ -24,6 +24,7 @@
     "@types/amqplib": "^0.5.13",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.13.1",
+    "coveralls": "^3.0.11",
     "jest": "^25.4.0",
     "ts-jest": "^25.4.0",
     "ts-node": "^8.9.0",
