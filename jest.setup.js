@@ -1,1 +1,1 @@
-jest.mock('amqplib')
+//jest.mock('amqplib')
