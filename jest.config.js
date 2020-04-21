@@ -5,4 +5,13 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.ts'],
   setupFiles: ['<rootDir>/jest.setup.js'],
   testMatch: ['<rootDir>/__tests__/**/*.spec.ts'],
+  coverageReporters: ['lcov'],
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 800,
+      lines: 100,
+      statements: 100,
+    },
+  },
 }
