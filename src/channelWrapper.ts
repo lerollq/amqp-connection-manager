@@ -1,6 +1,7 @@
 import { AmqpConnectionManager } from './connectionManager'
 import { EventEmitter } from 'events'
 import amqplib from 'amqplib'
+import { neverThrows } from './helpers'
 
 export type SetupFunc = (channel: amqplib.Channel) => Promise<any>
 
@@ -9,7 +10,7 @@ export interface AmqpChannelWrapperOptions {
 }
 
 export class AmqpChannelWrapper extends EventEmitter {
-  #currentChannel: amqplib.Channel | null
+  #currentChannel: amqplib.ConfirmChannel | null
   #setup: SetupFunc[]
 
   constructor(connectionManager: AmqpConnectionManager, private options: AmqpChannelWrapperOptions) {
@@ -23,36 +24,33 @@ export class AmqpChannelWrapper extends EventEmitter {
     if (connectionManager.isConnected() && connection) {
       this.onConnect(connection)
     }
-    connectionManager.on('connect', this.onConnect)
-    connectionManager.on('disconnect', this.onDisconnect)
+    connectionManager.on('connect', this.onConnect.bind(this))
+    connectionManager.on('disconnect', this.onDisconnect.bind(this))
   }
 
-  private onConnect = async (connection: amqplib.Connection): Promise<any> => {
+  private async onConnect(connection: amqplib.Connection) {
     try {
       const channel = await connection.createConfirmChannel()
-      channel.on('close', () => this.onChannelClose(channel))
+      channel.on('close', this.onChannelClose.bind(this, channel))
       this.#currentChannel = channel
-      await Promise.all(
-        this.#setup.map((func) =>
-          func(channel).catch((err) => {
-            if (this.#currentChannel) {
-              this.emit('error', err)
-            }
-          })
-        )
-      )
+      await Promise.all(this.#setup.map((func) => func(channel)))
+      return channel
     } catch (err) {
       this.emit('error', err)
     }
   }
 
-  private onDisconnect = () => {
+  private onDisconnect() {
     this.#currentChannel = null
   }
 
-  private onChannelClose = (channel: amqplib.Channel) => {
-    if (this.#currentChannel === channel) {
+  private onChannelClose(channel: amqplib.ConfirmChannel) {
+    if (this.currentChannel === channel) {
       this.#currentChannel = null
     }
+  }
+
+  get currentChannel() {
+    return this.#currentChannel
   }
 }

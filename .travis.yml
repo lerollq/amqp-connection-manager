@@ -4,8 +4,19 @@ node_js:
 branches:
   only:
     - master
-install:
+before_script:
   - npm install
 script:
   - npm run test:coverage
   - npm run coveralls
+
+after_success:
+  - npm run build
+
+deploy:
+  provider: npm
+  email: $NPM_PUBLIC_EMAIL
+  api_key: $NPM_API_KEY
+  skip_cleanup: true
+  on:
+    branch: master

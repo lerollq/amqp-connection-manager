@@ -35,9 +35,9 @@ describe('Connection Manager', () => {
     it('should bind methods on connection events ', async () => {
       jest.spyOn(amqplib, 'connect').mockResolvedValue(mockedConnection)
       await (connectionManager as any).connect()
-      expect(mockedConnection.on).toHaveBeenCalledTimes(1)
-      //      expect(mockedConnection.on).toHaveBeenNthCalledWith(1, 'error', () => {})
-      expect(mockedConnection.on).toHaveBeenNthCalledWith(1, 'close', jasmine.any(Function))
+      expect(mockedConnection.on).toHaveBeenCalledTimes(2)
+      expect(mockedConnection.on).toHaveBeenNthCalledWith(1, 'error', jasmine.any(Function))
+      expect(mockedConnection.on).toHaveBeenNthCalledWith(2, 'close', jasmine.any(Function))
     })
     it('should set returned amqplib connection as currentConnection class property', async () => {
       jest.spyOn(amqplib, 'connect').mockResolvedValue(mockedConnection)
