@@ -15,5 +15,6 @@ after_success:
 
 deploy:
   provider: npm
-  api_token: $NPM_API_KEY
+  email: $NPM_EMAIL
+  api_token: $NPM_PUBLIC_EMAIL
   skip_cleanup: true
