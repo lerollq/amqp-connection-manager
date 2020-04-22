@@ -38,7 +38,7 @@ export class AmqpConnectionManager extends EventEmitter {
   private async connect(): Promise<amqplib.Connection> {
     try {
       const connection = await amqplib.connect(this.#options.url, this.#options.socketOptions)
-      //connection.on('error', () => {})
+      connection.on('error', this.onError.bind(this))
       connection.on('close', this.onClose.bind(this))
       this.#currentConnection = connection
       this.emit('connect', connection)
@@ -54,6 +54,8 @@ export class AmqpConnectionManager extends EventEmitter {
   private removeChannel(channel: AmqpChannelWrapper) {
     this.#channels = this.#channels.filter((chann) => chann !== channel)
   }
+
+  private onError(err?: any) {}
 
   private onClose(err?: any) {
     this.#currentConnection = null

@@ -1,13 +1,14 @@
-import { Connection, Channel } from 'amqplib'
+import { Connection, ConfirmChannel } from 'amqplib'
 
 export const createMockedConnection = (): Connection => {
   const conn: any = {}
   conn.on = jest.fn()
   conn.createChannel = jest.fn()
+  conn.createConfirmChannel = jest.fn()
   return conn
 }
 
-export const createMockedChannel = (): Channel => {
+export const createMockedChannel = (): ConfirmChannel => {
   const chann: any = {}
   chann.on = jest.fn()
   chann.assertExchange = jest.fn()
