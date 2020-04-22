@@ -1,5 +1,5 @@
 {
-  "name": "amqlib-connection-manager",
+  "name": "@lasmala/amqplib-connection-manager",
   "version": "1.0.0",
   "description": "",
   "main": "lib/index.js",
