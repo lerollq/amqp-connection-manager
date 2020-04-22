@@ -6,12 +6,12 @@ module.exports = {
   setupFiles: ['<rootDir>/jest.setup.js'],
   testMatch: ['<rootDir>/__tests__/**/*.spec.ts'],
   coverageReporters: ['lcov'],
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 100,
-  //     functions: 100,
-  //     lines: 100,
-  //     statements: 100,
-  //   },
-  // },
+  coverageThreshold: {
+    global: {
+      branches: 95,
+      functions: 70,
+      lines: 95,
+      statements: 90,
+    },
+  },
 }
