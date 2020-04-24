@@ -1,141 +1,74 @@
-import amqplib from 'amqplib'
 import { createMockedConnection, createMockedChannel } from './mocks'
 import AmqpConnectionManager from '../src'
 import { AmqpChannelWrapper } from '../src/channelWrapper'
+import { sleep } from '../src/helpers'
 
-describe('AmqpChannelWrapper', () => {
-  let channelWrapper: AmqpChannelWrapper
-  let connectionManager: AmqpConnectionManager
-  const mockedConnection = createMockedConnection()
+describe('Channel Wrapper', () => {
+  const setupFunc = jest.fn()
   const mockedChannel = createMockedChannel()
-  const setupFunc = jest.fn().mockImplementation((channel: any) => {
-    return Promise.resolve(channel)
-  })
+  const mockedConnection = createMockedConnection()
+  const connectionManager = new AmqpConnectionManager({})
+  connectionManager.currentConnection = mockedConnection
 
   beforeEach(() => {
-    jest.spyOn(amqplib, 'connect').mockResolvedValue(mockedConnection)
-    connectionManager = new AmqpConnectionManager({ url: 'fake-url' })
     jest.restoreAllMocks()
-    jest.clearAllMocks()
   })
 
-  describe('Constructor', () => {
-    it('should init without crashing', () => {
-      jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect').mockImplementation()
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      expect(channelWrapper instanceof AmqpChannelWrapper).toEqual(true)
-    })
-
-    it('should call onConnect method', () => {
-      jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect').mockImplementation()
-      const spy = jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect')
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      expect(spy).toHaveBeenCalledTimes(1)
-    })
-
-    it('should not call onConnect method if connectionManager.isConnected return false', () => {
-      const spy = jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect').mockImplementation()
-      jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      expect(spy).not.toHaveBeenCalled()
-    })
-
-    it('should bind method to connectionManager events', () => {
-      jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect').mockImplementation()
-      const spy = jest.spyOn(connectionManager, 'on')
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      expect(spy).toHaveBeenCalledTimes(2)
-      expect(spy).toHaveBeenNthCalledWith(1, 'connect', jasmine.any(Function))
-      expect(spy).toHaveBeenNthCalledWith(2, 'disconnect', jasmine.any(Function))
-    })
+  it('should initialize without crashing', () => {
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
+    let channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    expect(channelWrapper.setup).toEqual([setupFunc])
+    expect(channelWrapper.currentChannel).toBeNull()
+    channelWrapper = new AmqpChannelWrapper(connectionManager, {})
+    expect(channelWrapper.setup).toEqual([])
   })
-  describe('Private Method: onConnect', () => {
-    const mockedConnection = createMockedConnection()
-    beforeEach(() => {
-      jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnect').mockImplementation()
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      jest.restoreAllMocks()
-      jest.resetAllMocks()
-    })
 
-    it('should call connection.createConfirmChannel method', async () => {
-      const spy = jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(spy).toHaveBeenCalledTimes(1)
-    })
-    it('should bind method to close channel event', async () => {
-      const spy = jest.spyOn(mockedChannel, 'on')
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(spy).toHaveBeenCalledWith('close', jasmine.any(Function))
-    })
-    it('should set created channel as currentChannel', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      expect(channelWrapper.currentChannel).toEqual(null)
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(channelWrapper.currentChannel).toEqual(mockedChannel)
-    })
-    it('should resolve setup functions', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(setupFunc).toHaveBeenCalledWith(mockedChannel)
-    })
-    it('should emit error in case of failure while resolving setup functions', async () => {
-      const spy = jest.spyOn(channelWrapper, 'emit')
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      setupFunc.mockRejectedValue(new Error('Resolve Error'))
-      await (channelWrapper as any).onConnect(mockedConnection).catch(() => {
-        expect(spy).toHaveBeenCalledTimes(1)
-        expect(spy).toHaveBeenCalledWith('error', new Error('Resolve Error'))
-      })
-    })
-    it('should emit error in case when an error has been threw', async () => {
-      const spy = jest.spyOn(channelWrapper, 'emit')
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockRejectedValue(new Error('Error channel'))
-      await (channelWrapper as any).onConnect(mockedConnection).catch(() => {
-        expect(spy).toHaveBeenCalledWith('error', new Error('Error channel'))
-      })
-    })
-    it('should bind method to channel close event', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      const spy = jest.spyOn(mockedChannel, 'on')
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(spy).toHaveBeenCalledWith('close', jasmine.any(Function))
-    })
-    it('should set channel as currentChannel', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      expect(channelWrapper.currentChannel).toEqual(null)
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(channelWrapper.currentChannel).toEqual(mockedChannel)
-    })
+  it('should trigger createChannel method when connection already ready at initialization', async () => {
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(true)
+    jest.spyOn(AmqpChannelWrapper.prototype as any, 'createChannel').mockImplementation()
+    const channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    expect((AmqpChannelWrapper.prototype as any).createChannel).toHaveBeenCalled()
   })
-  describe('Private Method: onDisconnect', () => {
-    it('should reset currentChannel', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(channelWrapper.currentChannel).not.toBeNull()
-      ;(channelWrapper as any).onDisconnect()
-      expect(channelWrapper.currentChannel).toBeNull()
-    })
+
+  it('should trigger createChannel method when connection emit connect event', async () => {
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
+    jest.spyOn(AmqpChannelWrapper.prototype as any, 'createChannel').mockImplementation()
+    const channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    expect((AmqpChannelWrapper.prototype as any).createChannel).not.toHaveBeenCalled()
+    connectionManager.emit('connect', mockedConnection)
+    expect((AmqpChannelWrapper.prototype as any).createChannel).toHaveBeenCalled()
   })
-  describe('Private Method: onChannelClose', () => {
-    it('should reset currentChannel', async () => {
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(channelWrapper.currentChannel).not.toBeNull()
-      ;(channelWrapper as any).onChannelClose(mockedChannel)
-      expect(channelWrapper.currentChannel).toBeNull()
-    })
-    it('should not reset currentChannel', async () => {
-      const wrongChannel = createMockedChannel()
-      jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
-      channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
-      await (channelWrapper as any).onConnect(mockedConnection)
-      expect(channelWrapper.currentChannel).not.toBeNull()
-      ;(channelWrapper as any).onChannelClose(wrongChannel)
-      expect(channelWrapper.currentChannel).not.toBeNull()
-    })
+
+  it('should trigger onConnectionClose method when connection emit close event', async () => {
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
+    jest.spyOn(AmqpChannelWrapper.prototype as any, 'onConnectionClose')
+    const channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    expect((AmqpChannelWrapper.prototype as any).onConnectionClose).not.toHaveBeenCalled()
+    connectionManager.emit('close')
+    expect((AmqpChannelWrapper.prototype as any).onConnectionClose).toHaveBeenCalled()
+  })
+
+  it('should create channel, resolve setup function and emit create event', async () => {
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
+    jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
+    setupFunc.mockImplementation((channel: any) => Promise.resolve())
+    const channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    const spyEmit = jest.spyOn(channelWrapper, 'emit')
+    connectionManager.emit('connect', mockedConnection)
+    await sleep(50)
+    expect(spyEmit).toHaveBeenCalledWith('create')
+    expect(channelWrapper.currentChannel).toEqual(mockedChannel)
+  })
+
+  it('should reset currentChannel and emit error event in case of failure', async () => {
+    const spyEmit = jest.spyOn(AmqpChannelWrapper.prototype, 'emit').mockImplementation()
+    jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
+    jest.spyOn(mockedConnection, 'createConfirmChannel').mockResolvedValue(mockedChannel)
+    setupFunc.mockImplementation((channel: any) => Promise.reject(new Error('Setup Function Error')))
+    const channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
+    connectionManager.emit('connect', mockedConnection)
+    await sleep(50)
+    expect(spyEmit).toHaveBeenCalledWith('error', new Error('Setup Function Error'))
+    expect(channelWrapper.currentChannel).toEqual(null)
   })
 })
