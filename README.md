@@ -1,6 +1,6 @@
 # Amqplib-Connection-Manager
 
-[![Build Status](https://travis-ci.com/lerollq/amqplib-connection-manager.svg?branch=master)](https://travis-ci.com/lerollq/amqplib-connection-manager) [![Coverage Status](https://coveralls.io/repos/github/lerollq/amqplib-connection-manager/badge.svg?branch=master)](https://coveralls.io/github/lerollq/amqplib-connection-manager?branch=master)
+[![Build Status](https://travis-ci.com/lerollq/amqplib-connection-manager.svg?branch=master)](https://travis-ci.com/lerollq/amqplib-connection-manager) ![Coveralls github](https://img.shields.io/coveralls/github/lerollq/amqplib-connection-manager)
 
 Developed by Quentin Le Rolland
 
