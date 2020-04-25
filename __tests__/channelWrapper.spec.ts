@@ -18,6 +18,10 @@ describe('Channel Wrapper', () => {
     jest.spyOn(AmqpChannelWrapper.prototype, 'emit').mockImplementation()
   })
 
+  afterEach(() => {
+    connectionManager.removeAllListeners()
+  })
+
   it('should initialize without crashing', () => {
     jest.spyOn(connectionManager, 'isConnected').mockReturnValue(false)
     let channelWrapper = new AmqpChannelWrapper(connectionManager, { setup: setupFunc })
