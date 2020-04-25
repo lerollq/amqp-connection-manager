@@ -4,6 +4,7 @@ jest.mock('../src/helpers', () => ({
 import { AmqpConnectionManager } from '../src/connectionManager'
 import amqplib from 'amqplib'
 import { createMockedConnection } from './mocks'
+import waitForExpect from 'wait-for-expect'
 
 jest.useFakeTimers()
 
@@ -17,9 +18,12 @@ describe('Connection Manager', () => {
 
   beforeEach(() => {
     jest.restoreAllMocks()
+    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
   })
 
   it('should initialize with passed options', () => {
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
+
     const fallback = () => true
     const connectionManager = new AmqpConnectionManager({
       url: {
@@ -39,9 +43,12 @@ describe('Connection Manager', () => {
       reconnectionOptions: { delay: 1000, maximumAttempts: -1, fallback },
       socketOptions: { key: 'value' },
     })
+    expect((AmqpConnectionManager.prototype as any).connect).toHaveBeenCalled()
   })
 
   it('should initialize with default parameters', () => {
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
+
     const connectionManager = new AmqpConnectionManager({})
     expect(connectionManager.options).toEqual({
       url: 'amqp://localhost',
@@ -52,14 +59,16 @@ describe('Connection Manager', () => {
       },
       socketOptions: {},
     })
+    expect((AmqpConnectionManager.prototype as any).connect).toHaveBeenCalled()
   })
 
   it('should call reconnect private method in case of failure while connection', async () => {
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
     jest.spyOn(amqplib, 'connect').mockRejectedValueOnce(new Error('Connection failed'))
     jest.spyOn(AmqpConnectionManager.prototype as any, 'reconnect').mockImplementation()
-    const connectionManager = new AmqpConnectionManager(connectionOptions)
-    await connectionManager.connect()
+    new AmqpConnectionManager(connectionOptions)
+    await waitForExpect(() => {
+      expect((AmqpConnectionManager.prototype as any).reconnect).toHaveBeenCalled()
+    })
     expect((AmqpConnectionManager.prototype as any).reconnect).toHaveBeenCalled()
     expect((AmqpConnectionManager.prototype as any).emit).toHaveBeenCalledWith('error', new Error('Connection failed'))
   })
@@ -67,8 +76,11 @@ describe('Connection Manager', () => {
   it('should add event listeners to connection and emit connect event', async () => {
     jest.spyOn(amqplib, 'connect').mockResolvedValueOnce(mockedConnection)
     jest.spyOn(mockedConnection, 'on')
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect')
     const connectionManager = new AmqpConnectionManager(connectionOptions)
-    await connectionManager.connect()
+    await waitForExpect(() => {
+      expect((AmqpConnectionManager.prototype as any).connect).toHaveBeenCalled()
+    })
     expect(mockedConnection.on).toHaveBeenCalledTimes(4)
     expect(mockedConnection.on).toHaveBeenCalledWith('error', (connectionManager as any).onConnectionError)
     expect(mockedConnection.on).toHaveBeenCalledWith('close', (connectionManager as any).onConnectionClose)
@@ -77,7 +89,7 @@ describe('Connection Manager', () => {
   })
 
   it('should create and return channel wrapper', () => {
-    jest.spyOn(amqplib, 'connect').mockResolvedValueOnce(mockedConnection)
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     const result = connectionManager.createChannel({ setup: (channel) => Promise.resolve() })
     expect(connectionManager.channels.length).toEqual(1)
@@ -85,7 +97,7 @@ describe('Connection Manager', () => {
   })
 
   it('should remove channel if channel emit close event', () => {
-    jest.spyOn(amqplib, 'connect').mockResolvedValueOnce(mockedConnection)
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     const channel = connectionManager.createChannel({ setup: (channel) => Promise.resolve() })
     channel.emit('close')
@@ -93,40 +105,43 @@ describe('Connection Manager', () => {
   })
 
   it('should attempt 5 reconnection, then call fallback function', async () => {
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
     jest.spyOn(amqplib, 'connect').mockRejectedValue(new Error('Connection failed'))
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect')
     const connectionManager = new AmqpConnectionManager(connectionOptions)
-    jest.spyOn(connectionManager, 'connect')
     const spyFallback = jest.spyOn(connectionManager.options.reconnectionOptions, 'fallback')
-    await connectionManager.connect()
-    expect(connectionManager.connect).toHaveBeenCalledTimes(6)
+    await waitForExpect(() => {
+      expect((AmqpConnectionManager.prototype as any).connect).toHaveBeenCalledTimes(6)
+    })
+
+    //await connectionManager.connect()
+    // expect(connectionManager.connect).toHaveBeenCalledTimes(6)
     expect(spyFallback).toBeCalled()
   })
 
   it('should emit close event and try to reconnect', async () => {
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     jest.spyOn(AmqpConnectionManager.prototype as any, 'reconnect').mockImplementation()
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit')
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     await (connectionManager as any).onConnectionClose(new Error('On Close'))
     expect(connectionManager.emit).toHaveBeenCalledWith('close', new Error('On Close'))
   })
 
   it('should emit error event', async () => {
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     await (connectionManager as any).onConnectionError(new Error('On Error'))
     expect(connectionManager.emit).toHaveBeenCalledWith('error', new Error('On Error'))
   })
 
   it('should emit blocked event', async () => {
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     await (connectionManager as any).onConnectionBlocked(new Error('On Blocked'))
     expect(connectionManager.emit).toHaveBeenCalledWith('blocked', new Error('On Blocked'))
   })
 
   it('should emit unblocked event', async () => {
-    jest.spyOn(AmqpConnectionManager.prototype, 'emit').mockImplementation()
+    jest.spyOn(AmqpConnectionManager.prototype as any, 'connect').mockImplementation()
     const connectionManager = new AmqpConnectionManager(connectionOptions)
     await (connectionManager as any).onConnectionUnblocked()
     expect(connectionManager.emit).toHaveBeenCalledWith('unblocked')

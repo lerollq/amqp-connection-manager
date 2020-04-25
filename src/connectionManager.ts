@@ -17,7 +17,7 @@ export interface ReconnectionOptions {
   /**
    * The maximum number of connection attempt which will be tried. Once the limit reached, process stop by executing (if provided) the fallback function
    *
-   * If you want to continue making connection attempts, leave the default value
+   * A negative value for maximumAttempts indicates no such limit.
    *
    * Default Value: -1
    */
@@ -82,7 +82,7 @@ export class AmqpConnectionManager extends EventEmitter {
       },
       url,
     } as ConnectionOptions
-    this.options.reconnectionOptions
+    this.connect()
   }
 
   public createChannel(options: AmqpChannelWrapperOptions): AmqpChannelWrapper {
@@ -96,7 +96,7 @@ export class AmqpConnectionManager extends EventEmitter {
     return !!this.currentConnection
   }
 
-  public connect() {
+  private connect() {
     if (this.#connectPromise) return this.#connectPromise
     return (this.#connectPromise = amqplib
       .connect(this.options.url, this.options.socketOptions)
@@ -155,7 +155,7 @@ export class AmqpConnectionManager extends EventEmitter {
 
   private isMaximumAttemptsReached(): boolean {
     const { maximumAttempts } = this.options.reconnectionOptions
-    if (maximumAttempts === -1 || this.#reconnectionAttempt < maximumAttempts) return false
+    if (maximumAttempts < 0 || this.#reconnectionAttempt < maximumAttempts) return false
     return true
   }
 }

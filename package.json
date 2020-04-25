@@ -1,6 +1,6 @@
 {
-  "name": "@lasmala/amqplib-connection-manager",
-  "version": "1.1.1",
+  "name": "@lasmala/amqp-connection-manager",
+  "version": "1.1.0",
   "description": "",
   "main": "lib/index.js",
   "typings": "lib/index",
@@ -15,7 +15,9 @@
     "type": "git",
     "url": "git+https://github.com/lerollq/amqplib-connection-manager.git"
   },
-  "keywords": [],
+  "keywords": [
+    "amqp"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -30,7 +32,8 @@
     "jest": "^25.4.0",
     "ts-jest": "^25.4.0",
     "ts-node": "^8.9.0",
-    "typescript": "^3.8.3"
+    "typescript": "^3.8.3",
+    "wait-for-expect": "^3.0.2"
   },
   "dependencies": {
     "amqplib": "^0.5.5"
