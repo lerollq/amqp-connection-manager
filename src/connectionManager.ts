@@ -96,7 +96,7 @@ export class AmqpConnectionManager extends EventEmitter {
     return !!this.currentConnection
   }
 
-  public connect() {
+  private connect() {
     if (this.#connectPromise) return this.#connectPromise
     return (this.#connectPromise = amqplib
       .connect(this.options.url, this.options.socketOptions)
