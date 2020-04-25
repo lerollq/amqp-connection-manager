@@ -60,6 +60,61 @@ const channel = connection.createChannel({
         }),
     ])
 })
+
+channel.publish('exchange', '', Buffer.from('Send new message'))
+
 ```
 
-Inspired by: https://github.com/benbria/node-amqp-connection-manager.git
+### Publish Message To Exchange / Send Message To Queue
+
+_Trying to publish/send a message while the channel is not yet created, or the connection closed/pending will result in a lose of the message_
+
+```typescript
+....
+    channel.publish("exchange", "routing-key", Buffer.from("message content"))
+    .then(() => {
+        // Message published
+    })
+    .catch((err)=>{
+        // Handle error
+    })
+
+    channel.sendToQueue('queue_name', Buffer.from("message content"))
+    .then(() => {
+        // Message sent to the queue
+    })
+    .catch((err)=>{
+        // Handle error
+    })
+....
+```
+
+### Error Handling
+
+- ##### Connection Events
+
+```typescript
+....
+    connection.on('connect', () => {
+      // Emitted once the connection is established
+    })
+    connection.on('reconnect', (attempt:number) => {
+      // Emitted during a connection attempt
+    })
+    connection.on('error', (err:any) => {...})
+    connection.on('close', (err?:any) => {...})
+....
+```
+
+- ##### Channel Events
+
+```typescript
+....
+    channel.on('error', (err:any) => {...})
+    channel.on('create', (err?:any) => {
+        // Emitted as soon the channel has been successfully created
+    })
+....
+```
+
+Inspired by: [node-amqp-connection-manager](https://github.com/benbria/node-amqp-connection-manager.git)
