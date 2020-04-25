@@ -89,7 +89,7 @@ _Trying to publish/send a message while the channel is not yet created, or the c
 ....
 ```
 
-### Error Handling
+### Events
 
 - ##### Connection Events
 
