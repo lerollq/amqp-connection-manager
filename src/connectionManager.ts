@@ -82,7 +82,7 @@ export class AmqpConnectionManager extends EventEmitter {
       },
       url,
     } as ConnectionOptions
-    this.options.reconnectionOptions
+    this.connect()
   }
 
   public createChannel(options: AmqpChannelWrapperOptions): AmqpChannelWrapper {
