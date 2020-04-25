@@ -1,6 +1,6 @@
 # Amqp-Connection-Manager
 
-[![Build Status](https://travis-ci.com/lerollq/amqplib-connection-manager.svg?branch=master)](https://travis-ci.com/lerollq/amqplib-connection-manager) ![Coveralls github](https://img.shields.io/coveralls/github/lerollq/amqplib-connection-manager)
+[![Build Status](https://travis-ci.com/lerollq/amqp-connection-manager.svg?branch=master)](https://travis-ci.com/lerollq/amqp-connection-manager) ![Coveralls github](https://img.shields.io/coveralls/github/lerollq/amqplib-connection-manager)
 
     npm install @lasmala/amqp-connection-manager
 
