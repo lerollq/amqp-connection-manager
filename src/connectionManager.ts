@@ -109,6 +109,7 @@ export class AmqpConnectionManager extends EventEmitter {
         this.#reconnectionAttempt = 0
         this.#connectPromise = null
         this.emit('connect', connection)
+        return this.currentConnection
       })
       .catch((error) => {
         this.emit('error', error)
