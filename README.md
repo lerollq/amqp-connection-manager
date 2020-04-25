@@ -91,7 +91,7 @@ _Trying to publish/send a message while the channel is not yet created, or the c
 
 ### Events
 
-- ##### Connection Events
+- Connection Events
 
 ```typescript
 ....
@@ -106,7 +106,7 @@ _Trying to publish/send a message while the channel is not yet created, or the c
 ....
 ```
 
-- ##### Channel Events
+- Channel Events
 
 ```typescript
 ....
